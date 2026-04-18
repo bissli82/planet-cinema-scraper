@@ -377,6 +377,30 @@
       background: #fff;
     }
     .detail-overlay .planet-link svg { width: 16px; height: 16px; }
+    .detail-overlay .imdb-link {
+      position: absolute;
+      top: 10px;
+      left: 50px;
+      height: 30px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5c518;
+      color: #000;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      font-family: Arial, sans-serif;
+      transition: transform 0.15s, background 0.15s;
+      z-index: 6;
+    }
+    .detail-overlay .imdb-link:hover {
+      transform: scale(1.1);
+      background: #ffd84a;
+    }
 
     /* Showtimes */
     .showtimes-section {
@@ -871,6 +895,18 @@
           '<path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"/>' +
           '<path d="M13 7v2M13 11v2M13 15v2"/></svg>';
         overlay.appendChild(link);
+      }
+
+      // IMDB link (top-left, next to the planet icon)
+      if (m.imdb_id) {
+        const imdb = document.createElement('a');
+        imdb.className = 'imdb-link';
+        imdb.href = 'https://www.imdb.com/title/' + m.imdb_id + '/';
+        imdb.target = '_blank';
+        imdb.rel = 'noopener noreferrer';
+        imdb.title = 'דף הסרט ב-IMDB';
+        imdb.textContent = 'IMDb';
+        overlay.appendChild(imdb);
       }
 
       if (m.description) {
