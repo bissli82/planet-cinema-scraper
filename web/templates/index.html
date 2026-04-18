@@ -301,6 +301,15 @@
       margin-right: auto;
     }
 
+    .language-chip {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
     .rating-badge {
       font-size: 0.7rem;
       padding: 2px 7px;
@@ -794,6 +803,12 @@
       rb.className = 'rating-badge';
       rb.textContent = m.content_rating;
       metaRow.appendChild(rb);
+    }
+    if (m.language) {
+      const lang = document.createElement('span');
+      lang.className = 'language-chip';
+      lang.textContent = m.language;
+      metaRow.appendChild(lang);
     }
     body.appendChild(metaRow);
 
