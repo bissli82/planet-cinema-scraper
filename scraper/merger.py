@@ -87,7 +87,7 @@ def merge(
         pdet = planet_details.get(pf.id, {}) or {}
         directors = (s.directors if s and s.directors else []) or imdb_info.get("directors", []) or pdet.get("directors", [])
         actors = (s.actors if s and s.actors else []) or imdb_info.get("cast", []) or pdet.get("cast", [])
-        language = (s.language if s and s.language else "") or ", ".join(imdb_info.get("languages", [])[:2])
+        language = (s.language if s and s.language else "") or omdb.get("language", "")
         description = (
             (s.description if s else "")
             or imdb_info.get("plot", "")

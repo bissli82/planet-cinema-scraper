@@ -108,6 +108,7 @@ def enrich_movies(movies: list[dict], existing_cache: dict[str, dict]) -> dict[s
                 "genre_en": data.get("Genre", ""),
                 "plot_en": data.get("Plot", ""),
                 "poster_omdb": data.get("Poster", ""),
+                "language": data.get("Language", ""),
             }
             logger.debug("OMDB enriched %s → %.1f", imdb_id, cache[imdb_id]["imdb_score"] or 0)
     return cache

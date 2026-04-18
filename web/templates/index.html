@@ -365,7 +365,7 @@
     .detail-overlay .info-value { color: var(--text); }
     .detail-overlay .planet-link {
       position: absolute;
-      top: 10px;
+      bottom: 10px;
       left: 10px;
       width: 30px;
       height: 30px;
@@ -388,7 +388,7 @@
     .detail-overlay .planet-link svg { width: 16px; height: 16px; }
     .detail-overlay .imdb-link {
       position: absolute;
-      top: 10px;
+      bottom: 10px;
       left: 50px;
       height: 30px;
       padding: 0 8px;
@@ -886,44 +886,6 @@
       h.textContent = m.title_he || m.title_en || '';
       overlay.appendChild(h);
 
-      // Planet Cinema ticket link (top-left corner of the overlay).
-      // When a specific date tab is active, deep-link to the cinema's
-      // date-filtered listing so the user sees that date's showtimes.
-      // Otherwise fall back to the film's info page.
-      if (m.page_url || activeDate) {
-        const link = document.createElement('a');
-        link.className = 'planet-link';
-        if (activeDate && activeDate !== 'all') {
-          link.href =
-            'https://www.planetcinema.co.il/cinemas/ayalon/1025' +
-            '#/buy-tickets-by-cinema?in-cinema=1025&at=' + activeDate +
-            '&view-mode=list';
-        } else {
-          link.href = m.page_url;
-        }
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.title = 'לרכישת כרטיסים בפלאנט סינמה';
-        link.innerHTML =
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-          'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
-          '<path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"/>' +
-          '<path d="M13 7v2M13 11v2M13 15v2"/></svg>';
-        overlay.appendChild(link);
-      }
-
-      // IMDB link (top-left, next to the planet icon)
-      if (m.imdb_id) {
-        const imdb = document.createElement('a');
-        imdb.className = 'imdb-link';
-        imdb.href = 'https://www.imdb.com/title/' + m.imdb_id + '/';
-        imdb.target = '_blank';
-        imdb.rel = 'noopener noreferrer';
-        imdb.title = 'דף הסרט ב-IMDB';
-        imdb.textContent = 'IMDb';
-        overlay.appendChild(imdb);
-      }
-
       if (m.description) {
         const d = document.createElement('div');
         d.className = 'full-desc';
@@ -951,6 +913,41 @@
       addInfo('אורך', m.runtime);
       if (m.imdb_score) addInfo('IMDB', m.imdb_score.toFixed(1));
       if (m.seret_score) addInfo('Seret', m.seret_score.toFixed(1));
+
+      // Planet Cinema ticket link (bottom-left of overlay)
+      if (m.page_url || activeDate) {
+        const link = document.createElement('a');
+        link.className = 'planet-link';
+        if (activeDate && activeDate !== 'all') {
+          link.href =
+            'https://www.planetcinema.co.il/cinemas/ayalon/1025' +
+            '#/buy-tickets-by-cinema?in-cinema=1025&at=' + activeDate +
+            '&view-mode=list';
+        } else {
+          link.href = m.page_url;
+        }
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.title = 'לרכישת כרטיסים בפלאנט סינמה';
+        link.innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+          'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"/>' +
+          '<path d="M13 7v2M13 11v2M13 15v2"/></svg>';
+        overlay.appendChild(link);
+      }
+
+      // IMDB link (bottom-left, next to the planet icon)
+      if (m.imdb_id) {
+        const imdb = document.createElement('a');
+        imdb.className = 'imdb-link';
+        imdb.href = 'https://www.imdb.com/title/' + m.imdb_id + '/';
+        imdb.target = '_blank';
+        imdb.rel = 'noopener noreferrer';
+        imdb.title = 'דף הסרט ב-IMDB';
+        imdb.textContent = 'IMDb';
+        overlay.appendChild(imdb);
+      }
 
       card.appendChild(overlay);
     }
