@@ -43,8 +43,8 @@ The pipeline (runs at 07:00 and 19:00 Jerusalem time):
 ## Quickstart
 
 ```bash
-git clone https://github.com/bissli82/serert_scraper_2026.git
-cd serert_scraper_2026
+git clone https://github.com/bissli82/planet-cinema-scraper.git
+cd planet-cinema-scraper
 cp .env.example .env
 # Optional: edit .env and add your free OMDB key (omdbapi.com, 1000/day).
 # Without a key, everything still works — only the title-search
@@ -72,7 +72,7 @@ docker compose up -d --build
 ## Project layout
 
 ```
-serert_scraper_2026/
+planet-cinema-scraper/
 ├── docker-compose.yml
 ├── Dockerfile                  # python:3.10-slim + lxml deps
 ├── requirements.txt
@@ -128,6 +128,24 @@ All other tuning (cinema ID, scrape times, date window) lives in code — Ayalon
 2. `git clone` + `docker compose up -d --build` on the server.
 3. Put nginx (or Caddy) in front for TLS and reverse-proxy `:80/:443 → :5000`.
 4. Set `OMDB_API_KEY` in `.env` on the server.
+
+---
+
+## Release notes
+
+### 2026-04-19
+- Language (שפה) now shown in hover overlay and as a chip on each card — sourced from OMDB's `Language` field with seret.co.il as primary.
+- Planet Cinema and IMDb link icons moved to the bottom of the hover overlay.
+
+### 2026-04-18
+- IMDb link badge added to hover overlay, next to the Planet Cinema ticket icon.
+- Planet Cinema ticket-link icon now deep-links to the active date's showtime listing instead of the generic film page.
+- Planet Cinema ticket-link icon added to hover overlay.
+
+### 2026-04-17 — initial release
+- Single Docker container serving a Hebrew RTL dashboard for Planet Cinema Ayalon.
+- Scrapes showtimes from Vista Cinema API, metadata from seret.co.il, IMDB scores from the official public dataset, and OMDB for poster/plot/language enrichment.
+- Date tabs, IMDB sort, genre filter, hover overlay with full cast/synopsis/showtimes.
 
 ---
 
