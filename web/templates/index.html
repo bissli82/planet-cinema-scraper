@@ -354,6 +354,29 @@
       margin-left: 4px;
     }
     .detail-overlay .info-value { color: var(--text); }
+    .detail-overlay .planet-link {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: #0f0f13;
+      border-radius: 50%;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      transition: transform 0.15s, background 0.15s;
+      z-index: 6;
+    }
+    .detail-overlay .planet-link:hover {
+      transform: scale(1.12);
+      background: #fff;
+    }
+    .detail-overlay .planet-link svg { width: 16px; height: 16px; }
 
     /* Showtimes */
     .showtimes-section {
@@ -823,6 +846,22 @@
       const h = document.createElement('h4');
       h.textContent = m.title_he || m.title_en || '';
       overlay.appendChild(h);
+
+      // Planet Cinema ticket link (top-left corner of the overlay)
+      if (m.page_url) {
+        const link = document.createElement('a');
+        link.className = 'planet-link';
+        link.href = m.page_url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.title = 'לרכישת כרטיסים בפלאנט סינמה';
+        link.innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+          'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"/>' +
+          '<path d="M13 7v2M13 11v2M13 15v2"/></svg>';
+        overlay.appendChild(link);
+      }
 
       if (m.description) {
         const d = document.createElement('div');
