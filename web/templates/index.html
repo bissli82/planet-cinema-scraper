@@ -847,11 +847,21 @@
       h.textContent = m.title_he || m.title_en || '';
       overlay.appendChild(h);
 
-      // Planet Cinema ticket link (top-left corner of the overlay)
-      if (m.page_url) {
+      // Planet Cinema ticket link (top-left corner of the overlay).
+      // When a specific date tab is active, deep-link to the cinema's
+      // date-filtered listing so the user sees that date's showtimes.
+      // Otherwise fall back to the film's info page.
+      if (m.page_url || activeDate) {
         const link = document.createElement('a');
         link.className = 'planet-link';
-        link.href = m.page_url;
+        if (activeDate && activeDate !== 'all') {
+          link.href =
+            'https://www.planetcinema.co.il/cinemas/ayalon/1025' +
+            '#/buy-tickets-by-cinema?in-cinema=1025&at=' + activeDate +
+            '&view-mode=list';
+        } else {
+          link.href = m.page_url;
+        }
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.title = 'לרכישת כרטיסים בפלאנט סינמה';
