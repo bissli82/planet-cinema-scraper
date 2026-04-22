@@ -67,6 +67,13 @@ def api_refresh():
     return jsonify({"status": "started"}), 202
 
 
+@app.route("/api/scrape-status")
+def api_scrape_status():
+    """Current scrape state — polled by the UI for the progress bar."""
+    from scraper.main import get_scrape_state
+    return jsonify(get_scrape_state())
+
+
 def _initial_scrape_if_needed():
     """Run the scraper once on startup if no data file exists yet."""
     if not MOVIES_FILE.exists():

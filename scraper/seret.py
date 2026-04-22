@@ -212,8 +212,12 @@ def _parse_detail(mid: int) -> Optional[SeretMovie]:
     )
 
 
-def scrape_movies() -> list[SeretMovie]:
-    """Return all movies currently in theaters + recent new releases from seret.co.il."""
+def scrape_movies(progress=None) -> list[SeretMovie]:
+    """Return all movies currently in theaters + recent new releases from seret.co.il.
+
+    `progress` is an optional callable(done: int, total: int) used by the
+    orchestrator to drive a UI progress bar as each movie page is fetched.
+    """
     discovery_urls = [
         f"{BASE}/movies/index.asp?catCase=4",    # now in theaters
         f"{BASE}/movies/index.asp?catCase=2",    # upcoming releases (David, Scream 7, Zootopia 2...)
@@ -230,9 +234,12 @@ def scrape_movies() -> list[SeretMovie]:
             all_ids.update(ids)
 
     logger.info("Total unique movie IDs to scrape: %d", len(all_ids))
+    total = len(all_ids)
+    if progress:
+        progress(0, total)
 
     movies: list[SeretMovie] = []
-    for mid in sorted(all_ids):
+    for idx, mid in enumerate(sorted(all_ids), start=1):
         time.sleep(REQUEST_DELAY)
         movie = _parse_detail(mid)
         if movie:
@@ -240,6 +247,8 @@ def scrape_movies() -> list[SeretMovie]:
             logger.debug("Scraped: %s (%s)", movie.title_en, movie.seret_id)
         else:
             logger.debug("Skipped MID=%d (no data)", mid)
+        if progress:
+            progress(idx, total)
 
     logger.info("Seret scrape complete: %d movies", len(movies))
     return movies
