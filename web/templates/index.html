@@ -960,29 +960,44 @@
     const overlay = document.getElementById('loading');
     overlay.classList.add('visible');
 
+    // Capture the CURRENT scraped_at so we can detect when the new one
+    // appears. The full scrape takes ~3 min (121 seret pages × 1s), so
+    // we have to wait for the timestamp to actually change.
+    let previousScrapedAt = '';
+    try {
+      const r0 = await fetch('/api/movies');
+      const d0 = await r0.json();
+      previousScrapedAt = d0.scraped_at || '';
+    } catch {}
+
     try {
       const res = await fetch('/api/refresh', { method: 'POST' });
       if (res.status === 202) {
-        // Poll until movies.json is updated
+        // Poll until scraped_at CHANGES — then we know the new file was written.
         let attempts = 0;
         const poll = setInterval(async () => {
           attempts++;
-          const r2 = await fetch('/api/movies');
-          const d2 = await r2.json();
-          if (d2.scraped_at && attempts > 3) {
-            clearInterval(poll);
-            overlay.classList.remove('visible');
-            allMovies = d2.movies || [];
-            targetDates = d2.target_dates || [];
-            activeDate = targetDates[0] || null;
-            buildDateTabs();
-            buildGenreFilters();
-            render();
-            document.getElementById('scraped-at').textContent =
-              'עדכון אחרון: ' + (d2.scraped_at || '').slice(0, 16).replace('T', ' ');
-          }
+          try {
+            const r2 = await fetch('/api/movies');
+            const d2 = await r2.json();
+            if (d2.scraped_at && d2.scraped_at !== previousScrapedAt) {
+              clearInterval(poll);
+              overlay.classList.remove('visible');
+              allMovies = d2.movies || [];
+              targetDates = d2.target_dates || [];
+              activeDate = targetDates[0] || null;
+              buildDateTabs();
+              buildGenreFilters();
+              render();
+              document.getElementById('scraped-at').textContent =
+                'עדכון אחרון: ' + (d2.scraped_at || '').slice(0, 16).replace('T', ' ');
+            }
+          } catch {}
+          // Scrape takes ~3 min; 60 attempts × 10s = 10 min ceiling.
           if (attempts > 60) { clearInterval(poll); overlay.classList.remove('visible'); }
         }, 10_000);
+      } else {
+        overlay.classList.remove('visible');
       }
     } catch {
       overlay.classList.remove('visible');
