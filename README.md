@@ -2,7 +2,7 @@
 
 A self-hosted dashboard that tells you **what's actually playing at Planet Cinema Ayalon** — today, this Thursday, next Thursday, and every date in between — sorted by IMDB score so the good stuff floats to the top.
 
-Runs in a single Docker container. Refreshes twice a day. Hebrew RTL UI with posters, synopses, cast, runtime, content rating, and showtimes per date.
+Runs in a single Docker container. Refreshes three times a day. Hebrew RTL UI with posters, synopses, cast, runtime, content rating, and showtimes per date.
 
 ![stack](https://img.shields.io/badge/python-3.10-blue) ![stack](https://img.shields.io/badge/flask-gunicorn-lightgrey) ![stack](https://img.shields.io/badge/docker-ready-0db7ed)
 
@@ -16,7 +16,7 @@ Planet Cinema's own site is a Single Page App that makes it painful to scan what
 
 ## What it does
 
-The pipeline (runs at 07:00 and 19:00 Jerusalem time):
+The pipeline (runs at 07:00, 14:00 and 20:00 Jerusalem time):
 
 1. **Discover dates** — hits Planet Cinema's `/dates/in-cinema/1025/until/...` endpoint to find every date that actually has screenings.
 2. **Fetch showtimes** — for each date, pulls the Vista Cinema quickbook API for cinema 1025 (Ayalon): title, hall, format (IMAX / 4DX / VIP / standard), start times.
@@ -53,7 +53,7 @@ docker compose up -d --build
 open http://localhost:5000
 ```
 
-The scraper runs automatically on startup (if `data/movies.json` is missing or stale) and then on cron at 07:00 and 19:00 Asia/Jerusalem.
+The scraper runs automatically on startup (if `data/movies.json` is missing or stale) and then on cron at 07:00, 14:00 and 20:00 Asia/Jerusalem.
 
 ### Manual refresh
 
@@ -118,7 +118,7 @@ All other tuning (cinema ID, scrape times, date window) lives in code — Ayalon
 - **Seret blocks external Referer on poster image requests.** Server returns 200, but the browser gets 403 because of the Referer check. Fix: `<img referrerpolicy="no-referrer">`.
 - **Planet detail pages are SPAs** but their initial HTML contains embedded JSON with the synopsis. We walk the string (not regex) to handle escaped quotes correctly.
 - **Fuzzy title matching is tight on purpose.** Cutoff 0.85 with a length-similarity guard. Too loose and you get "מומיה" ↔ "סופר מריו גלקסי" — a real failure I hit.
-- **Twice-daily cron is enough.** Planet publishes new week's showtimes on Thursdays; intra-day changes are rare. A 07:00 / 19:00 schedule catches everything with minimal load on the upstream sites.
+- **Thrice-daily cron.** Planet publishes new week's showtimes on Thursdays (usually around midday); intra-day changes are rare. A 07:00 / 14:00 / 20:00 schedule catches morning updates, midday Thursday drops, and any late-day additions with minimal load on the upstream sites.
 
 ---
 

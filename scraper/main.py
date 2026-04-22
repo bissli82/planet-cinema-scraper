@@ -143,9 +143,12 @@ def start_scheduler() -> None:
     from apscheduler.schedulers.background import BackgroundScheduler
 
     scheduler = BackgroundScheduler(timezone="Asia/Jerusalem")
-    scheduler.add_job(run_scrape, "cron", hour="7,19", minute=0, id="scrape")
+    # Three runs a day: morning (catch overnight schedule updates),
+    # midday (planet often publishes Thursday showtimes around noon),
+    # and evening (catch late-day additions).
+    scheduler.add_job(run_scrape, "cron", hour="7,14,20", minute=0, id="scrape")
     scheduler.start()
-    logger.info("Scheduler started (scrapes at 07:00 and 19:00 Jerusalem time)")
+    logger.info("Scheduler started (scrapes at 07:00, 14:00 and 20:00 Jerusalem time)")
 
 
 # ---------------------------------------------------------------------------
