@@ -1,0 +1,48 @@
+name: Deploy to VPS
+
+# Every push to main triggers a deploy. Also runnable manually from the
+# Actions tab via "Run workflow".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Don't queue deploys — if two pushes land close together, only the newest
+# one ships. Older in-flight runs are cancelled.
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Set up SSH
+        # Write the private key + known_hosts to ephemeral paths. All
+        # identifying info (host, user, key, host fingerprint) lives in
+        # repo Secrets — nothing concrete ends up in the workflow file.
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.HOSTI_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.HOSTI_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Trigger deploy
+        # The key on the VPS has `command="..."` forced — whatever string we
+        # send here is ignored; only the pinned deploy script runs. We pass
+        # `true` just so OpenSSH has something to invoke.
+        #
+        # `-4` forces IPv4: GitHub's hosted runners often can't route IPv6
+        # to arbitrary hosts, so if the VPS hostname resolves to both A and
+        # AAAA records, ssh picks v6 first and fails with
+        # "Network is unreachable". Pinning to v4 avoids that.
+        run: |
+          ssh -4 -i ~/.ssh/deploy_key \
+              -o UserKnownHostsFile=~/.ssh/known_hosts \
+              -o StrictHostKeyChecking=yes \
+              -o ConnectTimeout=15 \
+              "${{ secrets.HOSTI_USER }}@${{ secrets.HOSTI_HOST }}" true

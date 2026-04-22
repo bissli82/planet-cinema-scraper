@@ -1,0 +1,32 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Scrape output & caches
+data/movies.json
+data/omdb_cache.json
+data/omdb_title_cache.json
+data/omdb_verify_cache.json
+data/imdb_cache.json
+data/imdb_ratings.tsv.gz
+data/planet_details_cache.json
+data/seret_cache/
+data/posters/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude Code local state
+.claude/

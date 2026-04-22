@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>סרטים | פלאנט סינמה איילון</title>
+  <!-- Tab + mobile-home-screen icon. Inline SVG with the clapperboard
+       emoji so it scales cleanly and no extra asset round-trip is needed.
+       Same glyph the UI falls back to when a poster is missing — keeps
+       the visual language consistent. -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20y%3D%22.9em%22%20font-size%3D%2290%22%3E%F0%9F%8D%BF%3C%2Ftext%3E%3C%2Fsvg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%230f0f13%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2275%22%20font-size%3D%2260%22%20text-anchor%3D%22middle%22%3E%F0%9F%8D%BF%3C%2Ftext%3E%3C%2Fsvg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f13;
+      --surface: #1a1a24;
+      --surface2: #22222f;
+      --border: #2e2e40;
+      --accent: #e8a020;
+      --accent2: #c47c10;
+      --text: #e8e8f0;
+      --text-muted: #888898;
+      --green: #4caf77;
+      --red: #e05555;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Heebo', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #12121a 0%, #1e1e2e 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+
+    .header-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Controls bar ── */
+    .controls {
+      padding: 16px 24px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Date tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+      max-width: 100%;
+      padding-bottom: 4px;
+    }
+    .tabs::-webkit-scrollbar { height: 6px; }
+    .tabs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .tabs .tab { flex-shrink: 0; white-space: nowrap; }
+
+    .tab {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .tab:hover { border-color: var(--accent); color: var(--text); }
+
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+      font-weight: 700;
+    }
+
+    .spacer { flex: 1; }
+
+    /* Controls right side */
+    .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sort-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .sort-btn:hover { border-color: var(--accent); }
+    .sort-btn.active { border-color: var(--accent); color: var(--accent); }
+
+    .refresh-btn {
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .refresh-btn:hover { border-color: #4caf77; color: #4caf77; }
+
+    /* Filter chips */
+    .filter-row {
+      padding: 12px 24px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-label { font-size: 0.78rem; color: var(--text-muted); }
+
+    .chip {
+      padding: 4px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .chip:hover { border-color: var(--accent); color: var(--text); }
+    .chip.active { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+
+    /* ── Stats bar ── */
+    .stats {
+      padding: 10px 24px 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 20px;
+      padding: 20px 24px 40px;
+    }
+
+    /* ── Movie card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s, border-color 0.15s;
+      cursor: default;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: #3e3e55;
+    }
+
+    .card.no-showtimes {
+      opacity: 0.5;
+    }
+
+    .card.hidden { display: none; }
+
+    /* Poster */
+    .poster-wrap {
+      position: relative;
+      aspect-ratio: 2/3;
+      background: var(--surface2);
+      overflow: hidden;
+    }
+
+    .poster-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .poster-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: var(--border);
+    }
+
+    /* IMDB badge */
+    .imdb-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.78);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      backdrop-filter: blur(4px);
+    }
+
+    .imdb-badge.no-score {
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+
+    /* Card body */
+    .card-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .title-he {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--text);
+    }
+
+    .title-en {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .genre-chip {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .runtime {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-right: auto;
+    }
+
+    .language-chip {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .rating-badge {
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .description {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      cursor: help;
+    }
+
+    /* ── Hover detail overlay (card flip-up) ── */
+    .card { position: relative; }
+    .detail-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 15, 19, 0.97);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px;
+      overflow-y: auto;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s;
+      z-index: 5;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: var(--text);
+      scrollbar-width: thin;
+    }
+    .card:hover .detail-overlay { opacity: 1; visibility: visible; }
+    .detail-overlay h4 {
+      font-size: 0.95rem;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .detail-overlay .full-desc { color: var(--text-muted); margin-bottom: 10px; }
+    .detail-overlay .info-row { margin-bottom: 5px; }
+    .detail-overlay .info-label {
+      color: var(--accent);
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    .detail-overlay .info-value { color: var(--text); }
+    .detail-overlay .planet-link {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: #0f0f13;
+      border-radius: 50%;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      transition: transform 0.15s, background 0.15s;
+      z-index: 6;
+    }
+    .detail-overlay .planet-link:hover {
+      transform: scale(1.12);
+      background: #fff;
+    }
+    .detail-overlay .planet-link svg { width: 16px; height: 16px; }
+    .detail-overlay .imdb-link {
+      position: absolute;
+      bottom: 10px;
+      left: 50px;
+      height: 30px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5c518;
+      color: #000;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      font-family: Arial, sans-serif;
+      transition: transform 0.15s, background 0.15s;
+      z-index: 6;
+    }
+    .detail-overlay .imdb-link:hover {
+      transform: scale(1.1);
+      background: #ffd84a;
+    }
+
+    /* Showtimes */
+    .showtimes-section {
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    .showtimes-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .times-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .time-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 8px;
+      background: rgba(232, 160, 32, 0.12);
+      border: 1px solid rgba(232, 160, 32, 0.35);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      direction: ltr;
+    }
+
+    .time-pill .fmt {
+      font-size: 0.6rem;
+      background: var(--accent);
+      color: #000;
+      padding: 1px 4px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .time-pill.sold-out {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
+    .no-times-msg {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty .icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty p { font-size: 0.9rem; }
+
+    /* ── Loading overlay ── */
+    #loading {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    #loading.visible { display: flex; }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-box {
+      width: min(480px, 80vw);
+      padding: 20px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .progress-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+    }
+    .progress-message {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-align: center;
+      min-height: 1.3em;
+    }
+    .progress-track {
+      width: 100%;
+      height: 10px;
+      background: var(--surface2);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #4caf77);
+      transition: width 0.5s ease;
+      border-radius: 999px;
+    }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header { padding: 12px 16px; }
+      .controls, .filter-row, .stats { padding-right: 16px; padding-left: 16px; }
+      .grid { padding: 16px; gap: 14px; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay with progress bar -->
+<div id="loading">
+  <div class="progress-box">
+    <div class="progress-title">⟳ מרענן נתונים</div>
+    <div class="progress-message" id="progress-message">מתחיל…</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="progress-meta">
+      <span id="progress-percent">0%</span>
+      <span id="progress-elapsed">00:00</span>
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+  <div>
+    <h1>🎬 פלאנט איילון</h1>
+    <div class="header-meta" id="scraped-at">
+      {% if scraped_at %}עדכון אחרון: {{ scraped_at[:16].replace("T"," ") }}{% endif %}
+    </div>
+  </div>
+  <button class="refresh-btn" onclick="triggerRefresh()" title="הפעל סריקה חדשה">⟳ רענן</button>
+</header>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="tabs" id="date-tabs">
+    <!-- Injected by JS -->
+  </div>
+  <div class="spacer"></div>
+  <div class="controls-right">
+    <button class="sort-btn active" id="sort-btn" onclick="toggleSort()">
+      <span id="sort-icon">★</span>
+      <span id="sort-label">לפי IMDB</span>
+    </button>
+  </div>
+</div>
+
+<!-- Genre filter -->
+<div class="filter-row">
+  <span class="filter-label">ז'אנר:</span>
+  <div id="genre-filters" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+</div>
+
+<!-- Stats -->
+<div class="stats" id="stats"></div>
+
+<!-- Grid -->
+<div class="grid" id="grid"></div>
+
+<script>
+  let allMovies = [];
+  let targetDates = [];
+  let activeDate = null;
+  let sortByImdb = true;
+  let activeGenre = null;
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  async function init() {
+    const res = await fetch('/api/movies');
+    const data = await res.json();
+
+    allMovies = data.movies || [];
+    targetDates = data.target_dates || [];
+
+    if (targetDates.length === 0 && allMovies.length === 0) {
+      document.getElementById('grid').innerHTML =
+        '<div class="empty"><div class="icon">⏳</div><p>הסריקה הראשונה עדיין מתבצעת... נסה שוב בעוד כמה דקות.</p></div>';
+      return;
+    }
+
+    activeDate = targetDates[0] || null;
+
+    buildDateTabs();
+    buildGenreFilters();
+    render();
+  }
+
+  // ── Date tabs ─────────────────────────────────────────────────────────────
+  function buildDateTabs() {
+    const container = document.getElementById('date-tabs');
+    container.innerHTML = '';
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    targetDates.forEach(d => {
+      const btn = document.createElement('button');
+      btn.className = 'tab' + (d === activeDate ? ' active' : '');
+      btn.textContent = formatDateLabel(d, today);
+      btn.onclick = () => setDate(d, btn);
+      container.appendChild(btn);
+    });
+
+    // "All" tab — show all movies regardless of showtime
+    const allBtn = document.createElement('button');
+    allBtn.className = 'tab' + (activeDate === 'all' ? ' active' : '');
+    allBtn.textContent = 'כל הסרטים';
+    allBtn.onclick = () => setDate('all', allBtn);
+    container.appendChild(allBtn);
+  }
+
+  function formatDateLabel(dateStr, today) {
+    if (dateStr === today) return 'היום 📅';
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = d.getDate().toString().padStart(2, '0');
+    const mon = (d.getMonth() + 1).toString().padStart(2, '0');
+    const dows = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+    return `${dows[d.getDay()]} ${day}/${mon}`;
+  }
+
+  function setDate(d, btn) {
+    activeDate = d;
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    render();
+  }
+
+  // ── Genre filters ─────────────────────────────────────────────────────────
+  function buildGenreFilters() {
+    const genreCount = {};
+    allMovies.forEach(m => {
+      (m.genres || []).forEach(g => {
+        genreCount[g] = (genreCount[g] || 0) + 1;
+      });
+    });
+
+    const sorted = Object.entries(genreCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(e => e[0]);
+
+    const container = document.getElementById('genre-filters');
+    container.innerHTML = '';
+
+    sorted.forEach(g => {
+      const btn = document.createElement('button');
+      btn.className = 'chip' + (g === activeGenre ? ' active' : '');
+      btn.textContent = g;
+      btn.onclick = () => toggleGenre(g, btn);
+      container.appendChild(btn);
+    });
+  }
+
+  function toggleGenre(g, btn) {
+    activeGenre = activeGenre === g ? null : g;
+    document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+    if (activeGenre) btn.classList.add('active');
+    render();
+  }
+
+  // ── Sort ──────────────────────────────────────────────────────────────────
+  function toggleSort() {
+    sortByImdb = !sortByImdb;
+    const btn = document.getElementById('sort-btn');
+    document.getElementById('sort-label').textContent = sortByImdb ? 'לפי IMDB' : 'לפי שם';
+    btn.classList.toggle('active', sortByImdb);
+    render();
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  function render() {
+    let movies = [...allMovies];
+
+    // Genre filter
+    if (activeGenre) {
+      movies = movies.filter(m => (m.genres || []).includes(activeGenre));
+    }
+
+    // Sort
+    if (sortByImdb) {
+      movies.sort((a, b) => (b.imdb_score || 0) - (a.imdb_score || 0));
+    } else {
+      movies.sort((a, b) => (a.title_he || '').localeCompare(b.title_he || '', 'he'));
+    }
+
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+
+    let shown = 0, withTimes = 0, hidden = 0;
+
+    movies.forEach(m => {
+      const times = getTimesForActiveDate(m);
+      const hasShowtimes = activeDate === 'all' || times.length > 0;
+
+      if (!hasShowtimes) { hidden++; return; }
+
+      shown++;
+      if (times.length > 0) withTimes++;
+
+      grid.appendChild(buildCard(m, times, false));
+    });
+
+    const stats = document.getElementById('stats');
+    if (activeDate === 'all') {
+      stats.textContent = `${shown} סרטים`;
+    } else {
+      stats.textContent = `${withTimes} סרטים בתאריך זה${activeGenre ? ' בז\'אנר ' + activeGenre : ''}${hidden ? ` • ${hidden} ללא הקרנות הוסתרו` : ''}`;
+    }
+
+    if (shown === 0) {
+      grid.innerHTML = '<div class="empty"><div class="icon">🎭</div><p>לא נמצאו סרטים</p></div>';
+    }
+  }
+
+  function getTimesForActiveDate(movie) {
+    if (activeDate === 'all') return [];
+    return (movie.showtimes || {})[activeDate] || [];
+  }
+
+  // ── Card builder ──────────────────────────────────────────────────────────
+  function buildCard(m, times, noShowtimes) {
+    const card = document.createElement('div');
+    card.className = 'card' + (noShowtimes && activeDate !== 'all' ? ' no-showtimes' : '');
+
+    // Poster
+    const posterWrap = document.createElement('div');
+    posterWrap.className = 'poster-wrap';
+
+    // Posters go through our /poster/<planet_id> proxy: it caches bytes
+    // locally and serves with a month-long Cache-Control, so a flaky
+    // seret/planet/OMDB upstream can't randomly blank a thumbnail. The
+    // server walks the full candidate chain internally.
+    const hasPoster = !!m.planet_id;
+
+    const ph = document.createElement('div');
+    ph.className = 'poster-placeholder';
+    ph.textContent = m.title_he ? m.title_he.slice(0, 2) : '🎬';
+    ph.style.fontSize = m.title_he ? '1.5rem' : '3rem';
+    ph.style.display = hasPoster ? 'none' : 'flex';
+    posterWrap.appendChild(ph);
+
+    if (hasPoster) {
+      const img = document.createElement('img');
+      img.src = `/poster/${encodeURIComponent(m.planet_id)}`;
+      img.alt = m.title_he || m.title_en || '';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      // If the proxy 404s (every upstream failed), fall back to the text tile.
+      img.onerror = () => {
+        img.style.display = 'none';
+        ph.style.display = 'flex';
+      };
+      posterWrap.appendChild(img);
+    }
+
+    // IMDB badge
+    const badge = document.createElement('div');
+    badge.className = 'imdb-badge' + (m.imdb_score ? '' : ' no-score');
+    badge.innerHTML = m.imdb_score
+      ? `★ ${m.imdb_score.toFixed(1)}`
+      : `★ N/A`;
+    posterWrap.appendChild(badge);
+
+    card.appendChild(posterWrap);
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'card-body';
+
+    const titleHe = document.createElement('div');
+    titleHe.className = 'title-he';
+    titleHe.textContent = m.title_he || m.title_en || '';
+    body.appendChild(titleHe);
+
+    if (m.title_en && m.title_en !== m.title_he) {
+      const titleEn = document.createElement('div');
+      titleEn.className = 'title-en';
+      titleEn.textContent = m.title_en;
+      body.appendChild(titleEn);
+    }
+
+    // Meta: genres + runtime + rating
+    const metaRow = document.createElement('div');
+    metaRow.className = 'meta-row';
+    (m.genres || []).slice(0, 2).forEach(g => {
+      const chip = document.createElement('span');
+      chip.className = 'genre-chip';
+      chip.textContent = g;
+      metaRow.appendChild(chip);
+    });
+    if (m.runtime) {
+      const rt = document.createElement('span');
+      rt.className = 'runtime';
+      rt.textContent = m.runtime;
+      metaRow.appendChild(rt);
+    }
+    if (m.content_rating) {
+      const rb = document.createElement('span');
+      rb.className = 'rating-badge';
+      rb.textContent = m.content_rating;
+      metaRow.appendChild(rb);
+    }
+    if (m.language) {
+      const lang = document.createElement('span');
+      lang.className = 'language-chip';
+      lang.textContent = m.language;
+      metaRow.appendChild(lang);
+    }
+    body.appendChild(metaRow);
+
+    // Description
+    if (m.description) {
+      const desc = document.createElement('div');
+      desc.className = 'description';
+      desc.textContent = m.description;
+      body.appendChild(desc);
+    }
+
+    // Showtimes
+    const stSection = document.createElement('div');
+    stSection.className = 'showtimes-section';
+
+    if (activeDate !== 'all') {
+      const label = document.createElement('div');
+      label.className = 'showtimes-label';
+      label.textContent = 'שעות הקרנה:';
+      stSection.appendChild(label);
+
+      if (times.length > 0) {
+        const timesRow = document.createElement('div');
+        timesRow.className = 'times-row';
+        times.forEach(t => {
+          // t is either a string (legacy) or {time, format, sold_out, booking_link}
+          const timeStr = typeof t === 'string' ? t : t.time;
+          const fmts = typeof t === 'object' ? (t.format || []) : [];
+          const soldOut = typeof t === 'object' && t.sold_out;
+          const bookingLink = typeof t === 'object' ? t.booking_link : '';
+
+          const pill = bookingLink ? document.createElement('a') : document.createElement('span');
+          pill.className = 'time-pill' + (soldOut ? ' sold-out' : '');
+          if (bookingLink) {
+            pill.href = bookingLink;
+            pill.target = '_blank';
+            pill.style.textDecoration = 'none';
+          }
+          pill.append(timeStr);
+          // Attach format badge for IMAX/4DX/VIP
+          const premium = fmts.find(f => ['imax','4dx','screenx','vip'].includes(f));
+          if (premium) {
+            const b = document.createElement('span');
+            b.className = 'fmt';
+            b.textContent = premium === '4dx' ? '4DX' : premium.toUpperCase();
+            pill.appendChild(b);
+          }
+          timesRow.appendChild(pill);
+        });
+        stSection.appendChild(timesRow);
+      } else {
+        const msg = document.createElement('div');
+        msg.className = 'no-times-msg';
+        msg.textContent = 'אין הקרנות בתאריך זה';
+        stSection.appendChild(msg);
+      }
+    } else if (Object.keys(m.showtimes || {}).length > 0) {
+      const label = document.createElement('div');
+      label.className = 'showtimes-label';
+      label.textContent = 'תאריכים עם הקרנות: ' + Object.keys(m.showtimes).join(', ');
+      stSection.appendChild(label);
+    }
+
+    body.appendChild(stSection);
+    card.appendChild(body);
+
+    // Hover detail overlay
+    const hasDetails = m.description || (m.directors && m.directors.length) ||
+                       (m.actors && m.actors.length) || m.language || m.runtime;
+    if (hasDetails) {
+      const overlay = document.createElement('div');
+      overlay.className = 'detail-overlay';
+
+      const h = document.createElement('h4');
+      h.textContent = m.title_he || m.title_en || '';
+      overlay.appendChild(h);
+
+      if (m.description) {
+        const d = document.createElement('div');
+        d.className = 'full-desc';
+        d.textContent = m.description;
+        overlay.appendChild(d);
+      }
+
+      const addInfo = (label, value) => {
+        if (!value || (Array.isArray(value) && !value.length)) return;
+        const row = document.createElement('div');
+        row.className = 'info-row';
+        const lbl = document.createElement('span');
+        lbl.className = 'info-label';
+        lbl.textContent = label + ':';
+        const val = document.createElement('span');
+        val.className = 'info-value';
+        val.textContent = Array.isArray(value) ? value.join(', ') : value;
+        row.append(lbl, val);
+        overlay.appendChild(row);
+      };
+
+      addInfo('במאי', m.directors);
+      addInfo('שחקנים', (m.actors || []).slice(0, 5));
+      addInfo('שפה', m.language);
+      addInfo('אורך', m.runtime);
+      if (m.imdb_score) addInfo('IMDB', m.imdb_score.toFixed(1));
+      if (m.seret_score) addInfo('Seret', m.seret_score.toFixed(1));
+
+      // Planet Cinema ticket link (bottom-left of overlay)
+      if (m.page_url || activeDate) {
+        const link = document.createElement('a');
+        link.className = 'planet-link';
+        if (activeDate && activeDate !== 'all') {
+          link.href =
+            'https://www.planetcinema.co.il/cinemas/ayalon/1025' +
+            '#/buy-tickets-by-cinema?in-cinema=1025&at=' + activeDate +
+            '&view-mode=list';
+        } else {
+          link.href = m.page_url;
+        }
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.title = 'לרכישת כרטיסים בפלאנט סינמה';
+        link.innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+          'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"/>' +
+          '<path d="M13 7v2M13 11v2M13 15v2"/></svg>';
+        overlay.appendChild(link);
+      }
+
+      // IMDB link (bottom-left, next to the planet icon)
+      if (m.imdb_id) {
+        const imdb = document.createElement('a');
+        imdb.className = 'imdb-link';
+        imdb.href = 'https://www.imdb.com/title/' + m.imdb_id + '/';
+        imdb.target = '_blank';
+        imdb.rel = 'noopener noreferrer';
+        imdb.title = 'דף הסרט ב-IMDB';
+        imdb.textContent = 'IMDb';
+        overlay.appendChild(imdb);
+      }
+
+      card.appendChild(overlay);
+    }
+
+    return card;
+  }
+
+  // ── Manual refresh ────────────────────────────────────────────────────────
+  async function triggerRefresh() {
+    const overlay = document.getElementById('loading');
+    const fill = document.getElementById('progress-fill');
+    const pctEl = document.getElementById('progress-percent');
+    const msgEl = document.getElementById('progress-message');
+    const elapsedEl = document.getElementById('progress-elapsed');
+
+    // Reset visuals
+    fill.style.width = '0%';
+    pctEl.textContent = '0%';
+    msgEl.textContent = 'מתחיל…';
+    elapsedEl.textContent = '00:00';
+    overlay.classList.add('visible');
+
+    const fmtElapsed = (secs) => {
+      const m = Math.floor(secs / 60).toString().padStart(2, '0');
+      const s = Math.floor(secs % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    };
+
+    // Capture CURRENT scraped_at so we can detect when the new one lands.
+    let previousScrapedAt = '';
+    try {
+      const r0 = await fetch('/api/movies');
+      const d0 = await r0.json();
+      previousScrapedAt = d0.scraped_at || '';
+    } catch {}
+
+    let startedAt = Date.now();
+    let pollHandle = null;
+    let elapsedHandle = setInterval(() => {
+      elapsedEl.textContent = fmtElapsed((Date.now() - startedAt) / 1000);
+    }, 500);
+
+    const cleanup = () => {
+      clearInterval(elapsedHandle);
+      if (pollHandle) clearInterval(pollHandle);
+      overlay.classList.remove('visible');
+    };
+
+    try {
+      const res = await fetch('/api/refresh', { method: 'POST' });
+      if (res.status !== 202) {
+        cleanup();
+        return;
+      }
+
+      let attempts = 0;
+      pollHandle = setInterval(async () => {
+        attempts++;
+        try {
+          // Progress: current stage + percent
+          const rs = await fetch('/api/scrape-status');
+          const st = await rs.json();
+          if (st.percent != null) {
+            const p = Math.max(0, Math.min(100, st.percent));
+            fill.style.width = p + '%';
+            pctEl.textContent = p + '%';
+          }
+          if (st.message) msgEl.textContent = st.message;
+
+          // Completion check: fresh scraped_at means movies.json was rewritten.
+          const r2 = await fetch('/api/movies');
+          const d2 = await r2.json();
+          if (d2.scraped_at && d2.scraped_at !== previousScrapedAt) {
+            fill.style.width = '100%';
+            pctEl.textContent = '100%';
+            msgEl.textContent = 'הסריקה הושלמה';
+            // brief flash of the completed bar before hiding
+            setTimeout(() => {
+              cleanup();
+              allMovies = d2.movies || [];
+              targetDates = d2.target_dates || [];
+              activeDate = targetDates[0] || null;
+              buildDateTabs();
+              buildGenreFilters();
+              render();
+              document.getElementById('scraped-at').textContent =
+                'עדכון אחרון: ' + (d2.scraped_at || '').slice(0, 16).replace('T', ' ');
+            }, 600);
+            clearInterval(pollHandle);
+            pollHandle = null;
+          }
+        } catch {}
+        // Ceiling: 10 min (120 × 5s).
+        if (attempts > 120) { cleanup(); }
+      }, 2_000);
+    } catch {
+      cleanup();
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
