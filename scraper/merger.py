@@ -59,7 +59,14 @@ def merge(
     results: list[dict] = []
 
     for pf in planet_films:
+        # Try matching by Hebrew name first (most reliable for the Israeli
+        # film catalog), then fall back to Planet's English name. The
+        # English side resolves cases where Planet's Hebrew title is a
+        # generic word (e.g. "הדרמה" → "Hoppers") that doesn't fuzzy-match
+        # seret's actual Hebrew/English entries.
         s = _match_seret(pf.name, seret_lookup)
+        if not s and pf.name_en:
+            s = _match_seret(pf.name_en, seret_lookup)
 
         imdb_id = s.imdb_id if s else None
         imdb_info = imdb_cache.get(imdb_id or "", {}) or {}
@@ -107,7 +114,11 @@ def merge(
         results.append({
             "planet_id": pf.id,
             "title_he": s.title_he if s else pf.name,
-            "title_en": s.title_en if s else "",
+            # Prefer seret's English title (matched film); fall back to
+            # Planet's lang=en_US name. That fallback is what gives planet-
+            # only films a usable `title_en` — both for the UI subtitle and
+            # for downstream OMDB title-search to find an imdb_id.
+            "title_en": (s.title_en if s else "") or pf.name_en,
             "imdb_id": imdb_id,
             "imdb_score": imdb_score,
             "seret_score": s.seret_score if s else None,

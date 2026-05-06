@@ -258,17 +258,19 @@ def resolve_planet_only_ids(
     for movie in movies:
         if movie.get("imdb_id"):
             continue
-        title = movie.get("title_he") or ""
-        if not title:
+        title_he = movie.get("title_he") or ""
+        title_en = movie.get("title_en") or ""
+        if not title_he and not title_en:
             continue
 
         # Manual override path (free, no API call). Always tried, even
-        # without an OMDB key — that's the whole point of the map.
-        manual = _hebrew_override(title)
+        # without an OMDB key — that's the whole point of the map. Keyed
+        # on Hebrew title since these are Hebrew-only classics.
+        manual = _hebrew_override(title_he)
         if manual:
             movie["imdb_id"] = manual
             new_ids.append(manual)
-            logger.info("planet-only: hebrew override %r → %s", title, manual)
+            logger.info("planet-only: hebrew override %r → %s", title_he, manual)
             continue
 
         if not have_key:
@@ -290,18 +292,28 @@ def resolve_planet_only_ids(
         if m:
             year = m.group(0)
 
+        # Try English title first (cleanest input for OMDB) then Hebrew
+        # as a secondary path. The variant cleanup runs over each.
         imdb_id = ""
-        for variant in _title_variants(title):
-            time.sleep(REQUEST_DELAY)
-            data = fetch_omdb_by_title(variant, year)
-            candidate = (data or {}).get("imdbID") or ""
-            if candidate:
-                imdb_id = candidate
-                logger.info(
-                    "planet-only: %r (variant %r, year %s) → %s (%s)",
-                    title, variant, year, imdb_id, (data or {}).get("Title"),
-                )
-                break
+        attempted_variants: list[str] = []
+        for source_title in (title_en, title_he):
+            if imdb_id or not source_title:
+                continue
+            for variant in _title_variants(source_title):
+                if variant in attempted_variants:
+                    continue
+                attempted_variants.append(variant)
+                time.sleep(REQUEST_DELAY)
+                data = fetch_omdb_by_title(variant, year)
+                candidate = (data or {}).get("imdbID") or ""
+                if candidate:
+                    imdb_id = candidate
+                    logger.info(
+                        "planet-only: %r (variant %r, year %s) → %s (%s)",
+                        source_title, variant, year, imdb_id,
+                        (data or {}).get("Title"),
+                    )
+                    break
 
         cache[cache_key] = imdb_id  # cache miss as "" too
         if imdb_id:

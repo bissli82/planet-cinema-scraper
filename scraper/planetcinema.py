@@ -35,21 +35,22 @@ HEADERS = {
 @dataclass
 class PlanetFilm:
     id: str                 # e.g. "8031s2r"
-    name: str               # Hebrew title
+    name: str               # Hebrew title (lang=he_IL)
     length_min: int
     poster_url: str
     page_url: str           # movie info page
     release_year: str
     attribute_ids: list[str]  # e.g. ["comedy", "2d", "subbed", ...]
+    name_en: str = ""       # English title (lang=en_US) — empty if EN fetch fails
     showtimes: dict[str, list[dict]] = field(default_factory=dict)
     # showtimes[date_str] = [{"time": "23:30", "auditorium": "...", "format": ["imax", ...]}]
 
 
-def _event_url(date_str: str) -> str:
+def _event_url(date_str: str, lang: str = "he_IL") -> str:
     return (
         f"{BASE_URL}/il/data-api-service/v1/quickbook/{TENANT_ID}"
         f"/film-events/in-cinema/{CINEMA_ID}/at-date/{date_str}"
-        f"?attr=&lang=he_IL"
+        f"?attr=&lang={lang}"
     )
 
 
@@ -86,14 +87,34 @@ def fetch_available_dates(days_ahead: int = 21) -> list[date]:
 
 
 def scrape_showtimes(target_dates: list[date]) -> list[PlanetFilm]:
-    """Fetch films + showtimes for each target date. Returns a list of PlanetFilm."""
+    """Fetch films + showtimes for each target date. Returns a list of PlanetFilm.
+
+    Hits the same endpoint twice per date — once with `lang=he_IL` (Hebrew
+    titles, the canonical source) and once with `lang=en_US` (English
+    titles). The English call is what unlocks OMDB title-search for films
+    seret has no entry for: Planet's `name` in he_IL is often a Hebrew
+    transliteration (e.g. "הדרמה") that OMDB can't index, while `name`
+    in en_US is the real English title (e.g. "Hoppers"). Doubles the API
+    calls but each is fast (~1s); net cost ~10s on a full scrape.
+    """
     films_by_id: dict[str, PlanetFilm] = {}
+    name_en_map: dict[str, str] = {}  # film_id → English title (cumulative across dates)
 
     for d in target_dates:
         date_str = d.strftime("%Y-%m-%d")
         data = _fetch(date_str)
         if not data:
             continue
+
+        # Pull English titles in parallel-ish (sequential but cheap). We
+        # only need to capture each film_id once — the mapping is
+        # invariant across dates.
+        en_data = _fetch(date_str, lang="en_US")
+        if en_data:
+            for f in en_data.get("body", {}).get("films", []):
+                fid = f.get("id")
+                if fid and fid not in name_en_map:
+                    name_en_map[fid] = (f.get("name") or "").strip()
 
         body = data.get("body", {})
         raw_films = body.get("films", [])
@@ -113,7 +134,12 @@ def scrape_showtimes(target_dates: list[date]) -> list[PlanetFilm]:
                     page_url=f.get("link", ""),
                     release_year=str(f.get("releaseYear", "")),
                     attribute_ids=list(f.get("attributeIds", [])),
+                    name_en=name_en_map.get(fid, ""),
                 )
+            elif not films_by_id[fid].name_en and name_en_map.get(fid):
+                # Late binding: an earlier date didn't have EN data but a
+                # later one did.
+                films_by_id[fid].name_en = name_en_map[fid]
 
         # Add showtimes
         for e in raw_events:
@@ -148,8 +174,8 @@ def scrape_showtimes(target_dates: list[date]) -> list[PlanetFilm]:
     return films
 
 
-def _fetch(date_str: str) -> Optional[dict]:
-    url = _event_url(date_str)
+def _fetch(date_str: str, lang: str = "he_IL") -> Optional[dict]:
+    url = _event_url(date_str, lang=lang)
     try:
         r = requests.get(url, headers=HEADERS, timeout=15)
         if r.status_code == 200 and "json" in r.headers.get("content-type", ""):
