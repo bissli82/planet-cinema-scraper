@@ -183,114 +183,160 @@ def _extract_poster(soup: BeautifulSoup) -> Optional[str]:
     return None
 
 
+def _find_jsonld_movie(soup: BeautifulSoup) -> Optional[dict]:
+    """Locate the schema.org Movie node inside any <script type='application/ld+json'>.
+
+    Seret migrated all film metadata from inline `itemprop="…"` markup into
+    a single JSON-LD `@graph` blob. This is the authoritative source going
+    forward — it carries title (he+en), description, genres, directors,
+    actors, datePublished, image, sameAs (IMDb URL), and seret's composite
+    score in additionalProperty.
+    """
+    for s in soup.find_all("script", type="application/ld+json"):
+        body = s.string or s.get_text() or ""
+        if not body.strip():
+            continue
+        try:
+            data = json.loads(body)
+        except Exception:
+            continue
+        # Bare Movie object
+        if isinstance(data, dict) and data.get("@type") == "Movie":
+            return data
+        # @graph array
+        graph = data.get("@graph") if isinstance(data, dict) else None
+        if isinstance(graph, list):
+            for node in graph:
+                if isinstance(node, dict) and node.get("@type") == "Movie":
+                    return node
+    return None
+
+
+def _people_names(field) -> list[str]:
+    """Normalize a JSON-LD person field — list of strings or {name: ...} dicts."""
+    out: list[str] = []
+    if not field:
+        return out
+    if isinstance(field, (str, dict)):
+        field = [field]
+    if not isinstance(field, list):
+        return out
+    for item in field:
+        if isinstance(item, str):
+            n = item.strip()
+        elif isinstance(item, dict):
+            n = (item.get("name") or "").strip()
+        else:
+            continue
+        if n and n not in out:
+            out.append(n)
+    return out
+
+
 def _parse_detail(mid: int) -> Optional[SeretMovie]:
     url = f"{BASE}/movies/s_movies.asp?MID={mid}"
     soup = _get(url)
     if not soup:
         return None
 
-    title_he = ""
-    title_en = ""
-    description = ""
-    genres: list[str] = []
-    content_rating = ""
-    release_date = ""
-    runtime = ""
-    imdb_id = None
-    imdb_score: Optional[float] = None
-    seret_score: Optional[float] = None
+    movie = _find_jsonld_movie(soup)
+    if not movie:
+        # Page rendered but no JSON-LD Movie node — either a deleted/invalid
+        # MID or seret changed their structured-data layout. Visible in logs
+        # so we notice if the latter happens.
+        logger.warning("seret MID=%d: no JSON-LD Movie node found", mid)
+        return None
 
-    t = soup.select_one("span[itemprop='name']")
-    if t:
-        title_he = t.get_text(strip=True)
-
-    t = soup.select_one("span[itemprop='alternatename']")
-    if t:
-        title_en = t.get_text(strip=True)
-
+    title_he = (movie.get("name") or "").strip()
+    title_en = (movie.get("alternateName") or "").strip()
     if not title_he and not title_en:
-        return None  # skip invalid/deleted movie pages
+        return None  # malformed / placeholder page
 
-    t = soup.select_one("span[itemprop='description']")
-    if t:
-        description = t.get_text(strip=True)
+    description = (movie.get("description") or "").strip()
 
-    for g in soup.select("span[itemprop='genre']"):
-        text = g.get_text(strip=True)
-        if text:
-            genres.append(text)
+    genres: list[str] = []
+    g_field = movie.get("genre")
+    if isinstance(g_field, list):
+        genres = [g.strip() for g in g_field if isinstance(g, str) and g.strip()]
+    elif isinstance(g_field, str) and g_field.strip():
+        genres = [g_field.strip()]
 
-    t = soup.select_one("span[itemprop='contentRating']")
-    if t:
-        content_rating = t.get_text(strip=True)
+    release_date = (movie.get("datePublished") or movie.get("dateCreated") or "").strip()
 
-    t = soup.select_one("span[itemprop='datePublished']")
-    if t:
-        release_date = t.get_text(strip=True)
+    # IMDb ID — JSON-LD lists external links in `sameAs`. Pick the IMDb one.
+    imdb_id: Optional[str] = None
+    same_as = movie.get("sameAs") or []
+    if isinstance(same_as, str):
+        same_as = [same_as]
+    if isinstance(same_as, list):
+        for ref in same_as:
+            if isinstance(ref, str):
+                m = re.search(r"imdb\.com/title/(tt\d+)", ref)
+                if m:
+                    imdb_id = m.group(1)
+                    break
 
-    # Runtime: prefer itemprop duration (e.g. <span itemprop="duration" datetime="PT98M">98</span>)
-    dur = soup.select_one("span[itemprop='duration']")
-    if dur:
-        minutes = dur.get_text(strip=True)
-        if minutes.isdigit():
-            runtime = f"{minutes} min"
-    if not runtime:
-        for tag in soup.find_all(string=re.compile(r"\d+\s*דקות")):
-            m = re.search(r"(\d+)\s*דקות", tag)
-            if m:
-                runtime = f"{m.group(1)} min"
-                break
+    # IMDb score: NEVER from seret. Real IMDb scores live in the public
+    # IMDb ratings dataset, keyed by imdb_id (see scraper/imdb_scores.py).
+    imdb_score: Optional[float] = None
 
-    # IMDB ID from rating widget
-    imdb_widget = soup.select_one("span.imdbRatingPlugin[data-title]")
-    if imdb_widget:
-        imdb_id = imdb_widget.get("data-title")  # e.g. "tt17490712"
-
-    # NOTE: seret's page has two IMDb-looking numbers — the "IMDb 6.5/10" badge
-    # next to the poster (rendered live by IMDb's widget JS, NOT in static HTML)
-    # and a seret-internal stats line ("קהל: 6.8 · IMDb: 7.7 · כוונה: 3.8") which
-    # is seret's proprietary metric, NOT IMDb's real rating. A previous version
-    # of this code scraped the latter thinking it was IMDb's score — it's not.
-    # Real IMDb scores come from the public dataset (scraper/imdb_scores.py)
-    # keyed by the imdb_id extracted above, which IS reliable.
-    imdb_score = None
-
-    # Seret's own score — appears in an SVG badge as <text font-weight="900">X.X</text>
-    for t in soup.select("svg text"):
-        if t.get("font-weight") == "900":
+    # Seret's composite editorial score lives in additionalProperty[].
+    seret_score: Optional[float] = None
+    for prop in (movie.get("additionalProperty") or []):
+        if not isinstance(prop, dict):
+            continue
+        name = (prop.get("name") or "").lower()
+        if "seret score" in name:
             try:
-                val = float(t.get_text(strip=True))
+                val = float(prop.get("value"))
                 if 0 < val <= 10:
                     seret_score = val
-                    break
-            except ValueError:
-                continue
-
-    poster_url = _extract_poster(soup)
-
-    directors: list[str] = []
-    for d in soup.select("span[itemprop='director'] span[itemprop='name'], a[itemprop='director'], span[itemprop='director']"):
-        name = d.get_text(strip=True)
-        if name and name not in directors:
-            directors.append(name)
-
-    actors: list[str] = []
-    for a in soup.select("span[itemprop='actor'] span[itemprop='name'], a[itemprop='actor'], span[itemprop='actor']"):
-        name = a.get_text(strip=True)
-        if name and name not in actors:
-            actors.append(name)
-        if len(actors) >= 6:
+            except (TypeError, ValueError):
+                pass
             break
 
+    # Poster: JSON-LD `image` (string | dict | list). Fall back to og:image
+    # / video poster via the existing extractor.
+    poster_url: Optional[str] = None
+    img = movie.get("image")
+    if isinstance(img, str):
+        poster_url = img
+    elif isinstance(img, dict):
+        poster_url = img.get("url") or img.get("contentUrl")
+    elif isinstance(img, list) and img:
+        first = img[0]
+        if isinstance(first, str):
+            poster_url = first
+        elif isinstance(first, dict):
+            poster_url = first.get("url") or first.get("contentUrl")
+    if not poster_url:
+        poster_url = _extract_poster(soup)
+
+    directors = _people_names(movie.get("director"))
+    actors = _people_names(movie.get("actor"))[:6]
+
+    # ── Fields not currently in JSON-LD: best-effort scrape of the rendered HTML.
+    content_rating = ""
+    runtime = ""
     language = ""
-    lang_el = soup.select_one("span[itemprop='inLanguage']")
-    if lang_el:
-        language = lang_el.get_text(strip=True)
-    if not language:
-        # Seret often lists language in a labeled row like "שפה: אנגלית"
-        m = re.search(r"שפה\s*[::]\s*([^\n|·•]{1,40})", soup.get_text(" ", strip=True))
+
+    # Runtime: "X דקות" appears in the rendered metadata strip.
+    for tag_text in soup.find_all(string=re.compile(r"\d+\s*דקות")):
+        m = re.search(r"(\d+)\s*דקות", tag_text)
         if m:
-            language = m.group(1).strip()
+            runtime = f"{m.group(1)} min"
+            break
+
+    # Content rating: meta tag still present on some pages.
+    rating_meta = soup.find("meta", attrs={"itemprop": "contentRating"})
+    if rating_meta and rating_meta.get("content"):
+        content_rating = rating_meta["content"].strip()
+
+    # Language: labeled row like "שפה: אנגלית".
+    body_text = soup.get_text(" ", strip=True)
+    m = re.search(r"שפה\s*[::]\s*([^\n|·•]{1,40})", body_text)
+    if m:
+        language = m.group(1).strip()
 
     return SeretMovie(
         seret_id=mid,
