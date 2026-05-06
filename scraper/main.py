@@ -38,12 +38,13 @@ _STAGE_WEIGHTS = {
     "idle": 0.0,
     "planet_dates": 0.02,
     "planet_showtimes": 0.25,
-    "seret": 0.40,
+    "seret": 0.38,
     "omdb_resolve": 0.10,
     "omdb_enrich": 0.05,
     "imdb_dataset": 0.03,
     "planet_details": 0.10,
-    "merge": 0.05,
+    "merge": 0.04,
+    "planet_omdb": 0.03,
     "done": 1.0,
 }
 
@@ -220,6 +221,32 @@ def run_scrape() -> None:
         update_progress("merge", "ממזג נתונים וכותב קובץ…")
         from scraper.merger import merge
         movies = merge(planet_films, seret_movies, omdb_cache, imdb_cache, planet_details)
+
+        # --- Planet-only OMDB resolve ---
+        # For films Planet shows but seret has no entry for (concerts,
+        # foreign films listed only in Hebrew, anniversary re-releases),
+        # try OMDB title search with cleaned variants + a small Hebrew
+        # override map. Anything we resolve gets its IMDb score fetched
+        # from the public dataset right after.
+        update_progress("planet_omdb", "מנסה למצוא מזהי IMDB לסרטים שאינם ב-seret…")
+        from scraper.omdb import resolve_planet_only_ids
+        new_planet_ids, title_cache = resolve_planet_only_ids(movies, title_cache)
+        _save_json(OMDB_TITLE_CACHE_FILE, title_cache)
+        if new_planet_ids:
+            imdb_cache = enrich_imdb(new_planet_ids, imdb_cache)
+            _save_json(imdb_cache_file, imdb_cache)
+            applied = 0
+            for movie in movies:
+                if movie.get("imdb_score") or not movie.get("imdb_id"):
+                    continue
+                info = imdb_cache.get(movie["imdb_id"], {}) or {}
+                score = info.get("imdb_score")
+                if score:
+                    movie["imdb_score"] = score
+                    applied += 1
+            logger.info("Planet-only resolve: applied %d new IMDb scores", applied)
+            # Re-sort: scores changed, ordering should reflect that
+            movies.sort(key=lambda x: (-(x.get("imdb_score") or 0), x.get("title_he") or ""))
 
         output = {
             "scraped_at": datetime.now().isoformat(timespec="seconds"),
